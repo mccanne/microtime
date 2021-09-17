@@ -1,0 +1,85 @@
+*** sys/i386/i386/machdep.c:1.1	Sun Feb 21 21:21:30 1993
+--- sys/i386/i386/machdep.c	Tue Feb 16 20:46:29 1993
+***************
+*** 3,9 ****
+   * The Berkeley Software Design Inc. software License Agreement specifies
+   * the terms and conditions for redistribution.
+   *
+!  *      BSDI $Id: machdep.c,v 1.1 1993/02/13 07:35:48 mccanne Exp $
+   */
+  
+  /*-
+--- 3,9 ----
+   * The Berkeley Software Design Inc. software License Agreement specifies
+   * the terms and conditions for redistribution.
+   *
+!  *      BSDI $Id: machdep.c,v 1.2 1993/02/17 04:45:10 mccanne Exp $
+   */
+  
+  /*-
+***************
+*** 676,681 ****
+--- 676,682 ----
+  	DELAY(15*1000000);
+  }
+  
++ #ifdef HZ
+  microtime(tvp)
+  	register struct timeval *tvp;
+  {
+***************
+*** 689,694 ****
+--- 690,696 ----
+  	}
+  	splx(s);
+  }
++ #endif
+  
+  initcpu()
+  {
+*** sys/i386/isa/clock.c:1.1	Sun Feb 21 21:25:50 1993
+--- sys/i386/isa/clock.c	Tue Feb 16 20:47:07 1993
+***************
+*** 3,9 ****
+   * The Berkeley Software Design Inc. software License Agreement specifies
+   * the terms and conditions for redistribution.
+   *
+!  *	BSDI $Id: clock.c,v 1.1 1993/02/17 03:23:59 mccanne Exp $
+   */
+   
+  /*-
+--- 3,9 ----
+   * The Berkeley Software Design Inc. software License Agreement specifies
+   * the terms and conditions for redistribution.
+   *
+!  *	BSDI $Id: clock.c,v 1.2 1993/02/17 04:45:52 mccanne Exp $
+   */
+   
+  /*-
+***************
+*** 55,60 ****
+--- 55,61 ----
+  #include "i386/isa/icu.h"
+  #include "i386/isa/isa.h"
+  #include "i386/isa/rtc.h"
++ #include "i386/isa/timerreg.h"
+  
+  #define DAYST 119
+  #define DAYEN 303
+***************
+*** 66,72 ****
+  	int s;
+  
+  	/* initialize 8253 clock */
+! 	outb(IO_TIMER1 + 3, 0x36);
+  	/*
+  	 * Divider for 1193182 Hz clock to get closest approximation
+  	 * to hz.  Should also adjust estimated clock tick, but we're
+--- 67,73 ----
+  	int s;
+  
+  	/* initialize 8253 clock */
+! 	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+  	/*
+  	 * Divider for 1193182 Hz clock to get closest approximation
+  	 * to hz.  Should also adjust estimated clock tick, but we're

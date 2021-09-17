@@ -1,0 +1,125 @@
+*** i386/isa/clock.c.~1~	Sat Feb 20 11:23:28 1993
+--- i386/isa/clock.c	Sat Feb 20 23:51:26 1993
+***************
+*** 60,65 ****
+--- 60,66 ----
+  #include "i386/isa/icu.h"
+  #include "i386/isa/isa.h"
+  #include "i386/isa/rtc.h"
++ #include "i386/isa/timerreg.h"
+  
+  #define DAYST 119
+  #define DAYEN 303
+***************
+*** 71,77 ****
+  	findcpuspeed();		/* use the clock (while it's free)
+  					to find the cpu speed */
+  	/* initialize 8253 clock */
+! 	outb (IO_TIMER1+3, 0x36);
+  	outb (IO_TIMER1, XTALSPEED/hz);
+  	outb (IO_TIMER1, (XTALSPEED/hz)/256);
+  
+--- 72,78 ----
+  	findcpuspeed();		/* use the clock (while it's free)
+  					to find the cpu speed */
+  	/* initialize 8253 clock */
+! 	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+  	outb (IO_TIMER1, XTALSPEED/hz);
+  	outb (IO_TIMER1, (XTALSPEED/hz)/256);
+  
+*** /dev/null	Sat Feb 20 23:50:02 1993
+--- sys/asm.h	Sat Feb 20 19:00:02 1993
+***************
+*** 0 ****
+--- 1,57 ----
++ /*-
++  * Copyright (c) 1990 The Regents of the University of California.
++  * All rights reserved.
++  *
++  * This code is derived from software contributed to Berkeley by
++  * William Jolitz.
++  *
++  * Redistribution and use in source and binary forms, with or without
++  * modification, are permitted provided that the following conditions
++  * are met:
++  * 1. Redistributions of source code must retain the above copyright
++  *    notice, this list of conditions and the following disclaimer.
++  * 2. Redistributions in binary form must reproduce the above copyright
++  *    notice, this list of conditions and the following disclaimer in the
++  *    documentation and/or other materials provided with the distribution.
++  * 3. All advertising materials mentioning features or use of this software
++  *    must display the following acknowledgement:
++  *	This product includes software developed by the University of
++  *	California, Berkeley and its contributors.
++  * 4. Neither the name of the University nor the names of its contributors
++  *    may be used to endorse or promote products derived from this software
++  *    without specific prior written permission.
++  *
++  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
++  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
++  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
++  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++  * SUCH DAMAGE.
++  *
++  *	@(#)asm.h	5.5 (Berkeley) 5/7/91
++  */
++ 
++ #ifdef PROF
++ # ifdef __STDC__
++ #  define ENTRY(x)	.globl _ ## x; \
++ 			.data; 1:; .long 0; .text; .align 2; _ ## x: \
++ 			movl $1b,%eax; call mcount
++ # else
++ #  define	ENTRY(x)	.globl _/**/x; \
++ 			.data; 1:; .long 0; .text; .align 2; _/**/x: \
++ 			movl $1b,%eax; call mcount
++ # endif /* __STDC__ */
++ #else
++ # ifdef __STDC__
++ #  define ENTRY(x)	.globl _ ## x; .text; .align 2; _ ## x:
++ # else
++ #  define	ENTRY(x)	.globl _/**/x; .text; .align 2; _/**/x: 
++ # endif /* __STDC__ */
++ #endif PROF
++ #define	ASMSTR		.asciz
++ 
+*** i386/conf/Makefile.i386.~1~	Sat Feb 20 09:44:22 1993
+--- i386/conf/Makefile.i386	Sat Feb 20 23:54:58 1993
+***************
+*** 41,46 ****
+--- 41,47 ----
+  
+  NORMAL_C= ${CC} -c ${CFLAGS} ${PROF} $<
+  NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
++ NORMAL_S= ${CPP} -I. -DLOCORE ${COPTS} $< | ${AS} ${ASFLAGS} -o $*.o
+  DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
+  DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
+  SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o
+*** i386/i386/machdep.c-pk0.2.1    Sat Feb 27 20:37:22 1993
+--- i386/i386/machdep.c    Sat Feb 27 20:38:09 1993
+***************
+*** 561,566 ****
+--- 561,567 ----
+        DELAY(10000);
+  }
+  
++ #ifdef HZ
+  microtime(tvp)
+        register struct timeval *tvp;
+  {
+***************
+*** 574,579 ****
+--- 575,581 ----
+        }
+        splx(s);
+  }
++ #endif
+  
+  physstrat(bp, strat, prio)
+        struct buf *bp;
